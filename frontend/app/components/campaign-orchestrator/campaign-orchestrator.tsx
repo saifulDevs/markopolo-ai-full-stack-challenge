@@ -269,12 +269,8 @@ function MessageCard({ payload }: { payload: CampaignPayload }) {
 }
 
 export function CampaignOrchestrator() {
-  const [selectedSources, setSelectedSources] = useState<DataSourceId[]>(
-    DATA_SOURCES.map((item) => item.id),
-  );
-  const [selectedChannels, setSelectedChannels] = useState<ChannelId[]>(
-    CHANNELS.map((item) => item.id),
-  );
+  const [selectedSources, setSelectedSources] = useState<DataSourceId[]>([]);
+  const [selectedChannels, setSelectedChannels] = useState<ChannelId[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [messages, setMessages] = useState<CampaignPayload[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -329,6 +325,7 @@ export function CampaignOrchestrator() {
     };
 
     socket.onmessage = (event) => {
+      console.log(event, 'event')
       try {
         const payload: CampaignPayload = JSON.parse(event.data);
         setMessages((prev) => [payload, ...prev].slice(0, MAX_MESSAGES));
@@ -401,6 +398,7 @@ export function CampaignOrchestrator() {
             <button
               type="button"
               onClick={connect}
+              disabled
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
               {status === "connected" ? "Reconnect" : "Start streaming"}

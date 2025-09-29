@@ -1,5 +1,5 @@
 import type { Route } from "./+types/home";
-import { CampaignOrchestrator } from "../features/campaign-orchestrator/campaign-orchestrator";
+import { CampaignOrchestrator } from "../components/campaign-orchestrator/campaign-orchestrator";
 
 export function meta({}: Route.MetaArgs) {
   return [
