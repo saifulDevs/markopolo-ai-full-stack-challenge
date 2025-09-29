@@ -398,7 +398,11 @@ export function CampaignOrchestrator() {
             <button
               type="button"
               onClick={connect}
-              disabled
+              disabled={
+                status === "connecting" ||
+                selectedSources.length === 0 ||
+                selectedChannels.length === 0
+              }
               className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
             >
               {status === "connected" ? "Reconnect" : "Start streaming"}
