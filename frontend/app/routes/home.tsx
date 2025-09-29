@@ -1,13 +1,17 @@
 import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { CampaignOrchestrator } from "../features/campaign-orchestrator/campaign-orchestrator";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Campaign Orchestrator" },
+    {
+      name: "description",
+      content:
+        "Stream AI-generated campaign recommendations across channels with live data signals.",
+    },
   ];
 }
 
 export default function Home() {
-  return <Welcome />;
+  return <CampaignOrchestrator />;
 }
