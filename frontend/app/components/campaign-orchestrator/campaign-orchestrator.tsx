@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type DataSourceId = "gtm" | "facebook_pixel" | "google_ads_tag";
 type ChannelId = "email" | "sms" | "whatsapp" | "ads";
@@ -91,6 +91,19 @@ const CHANNELS: Array<{
     description: "Dynamic paid placements that mirror site experience",
   },
 ];
+
+type ThreadMessage =
+  | {
+      id: string;
+      role: "user";
+      prompt: string;
+      createdAt: string;
+    }
+  | {
+      id: string;
+      role: "assistant";
+      payload: CampaignPayload;
+    };
 
 const MAX_MESSAGES = 20;
 
@@ -268,12 +281,27 @@ function MessageCard({ payload }: { payload: CampaignPayload }) {
   );
 }
 
+function UserMessageCard({ prompt, createdAt }: { prompt: string; createdAt: string }) {
+  return (
+    <article className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm dark:border-blue-500/40 dark:bg-blue-500/10 dark:text-blue-50">
+      <header className="flex items-center justify-between">
+        <span className="font-semibold uppercase tracking-wide">You</span>
+        <span className="text-xs text-blue-700/80 dark:text-blue-200/70">
+          {formatTimestamp(createdAt)}
+        </span>
+      </header>
+      <p className="mt-2 whitespace-pre-wrap leading-relaxed">{prompt}</p>
+    </article>
+  );
+}
+
 export function CampaignOrchestrator() {
   const [selectedSources, setSelectedSources] = useState<DataSourceId[]>([]);
   const [selectedChannels, setSelectedChannels] = useState<ChannelId[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
-  const [messages, setMessages] = useState<CampaignPayload[]>([]);
+  const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState("");
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -325,10 +353,18 @@ export function CampaignOrchestrator() {
     };
 
     socket.onmessage = (event) => {
-      console.log(event, 'event')
       try {
         const payload: CampaignPayload = JSON.parse(event.data);
-        setMessages((prev) => [payload, ...prev].slice(0, MAX_MESSAGES));
+        setMessages((prev) =>
+          [
+            {
+              id: `${payload.campaignId}-${payload.generatedAt}`,
+              role: "assistant",
+              payload,
+            },
+            ...prev,
+          ].slice(0, MAX_MESSAGES),
+        );
       } catch (err) {
         console.error("Failed to parse payload", err);
         setError("Received an unexpected payload from the server.");
@@ -375,6 +411,49 @@ export function CampaignOrchestrator() {
       );
     },
     [],
+  );
+
+  const handlePromptSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+
+      const trimmed = prompt.trim();
+      if (!trimmed) {
+        return;
+      }
+
+      const socket = wsRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        setError("Connection is not ready. Please reconnect and try again.");
+        return;
+      }
+
+      setError(null);
+
+      const outboundPayload = {
+        prompt: trimmed,
+        dataSources: selectedSources,
+        channels: selectedChannels,
+      };
+
+      socket.send(JSON.stringify(outboundPayload));
+
+      const createdAt = new Date().toISOString();
+      setMessages((prev) =>
+        [
+          {
+            id: `user-${createdAt}`,
+            role: "user",
+            prompt: trimmed,
+            createdAt,
+          },
+          ...prev,
+        ].slice(0, MAX_MESSAGES),
+      );
+
+      setPrompt("");
+    },
+    [prompt, selectedChannels, selectedSources],
   );
 
   return (
@@ -463,11 +542,39 @@ export function CampaignOrchestrator() {
           </div>
         ) : (
           <div className="space-y-4">
-            {messages.map((message) => (
-              <MessageCard key={`${message.campaignId}-${message.generatedAt}`} payload={message} />
-            ))}
+            {messages.map((message) =>
+              message.role === "assistant" ? (
+                <MessageCard key={message.id} payload={message.payload} />
+              ) : (
+                <UserMessageCard key={message.id} prompt={message.prompt} createdAt={message.createdAt} />
+              ),
+            )}
           </div>
         )}
+        <form className="sticky bottom-0 mt-6 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900" onSubmit={handlePromptSubmit}>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="campaign-orchestrator-prompt">
+            Draft prompt
+          </label>
+          <textarea
+            id="campaign-orchestrator-prompt"
+            name="prompt"
+            rows={3}
+            className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+            placeholder="Ask the orchestrator to generate the next campaign..."
+            value={prompt}
+            onChange={(event) => setPrompt(event.target.value)}
+            disabled={status !== "connected"}
+          />
+          <div className="flex items-center justify-end">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={status !== "connected" || prompt.trim().length === 0}
+            >
+              Send prompt
+            </button>
+          </div>
+        </form>
       </section>
     </main>
   );
