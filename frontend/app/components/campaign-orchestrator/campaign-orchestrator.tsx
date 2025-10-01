@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React,  {  useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type DataSourceId = "gtm" | "facebook_pixel" | "google_ads_tag";
 type ChannelId = "email" | "sms" | "whatsapp" | "ads";
@@ -309,7 +309,7 @@ export function CampaignOrchestrator() {
     if (typeof window === "undefined") {
       return "ws://localhost:8000/ws";
     }
-    const override = (import.meta.env.VITE_WS_URL as string | undefined) ?? "";
+    const override = (import.meta.env.VITE_WS_URL as string | undefined) ?? "ws://localhost:8000/ws";
     if (override) {
       return override;
     }
@@ -414,7 +414,7 @@ export function CampaignOrchestrator() {
   );
 
   const handlePromptSubmit = useCallback(
-    (event: FormEvent<HTMLFormElement>) => {
+    (event:  React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       const trimmed = prompt.trim();
