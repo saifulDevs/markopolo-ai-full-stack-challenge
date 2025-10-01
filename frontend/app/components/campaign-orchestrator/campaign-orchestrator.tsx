@@ -551,30 +551,46 @@ export function CampaignOrchestrator() {
             )}
           </div>
         )}
-        <form className="sticky bottom-0 mt-6 space-y-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900" onSubmit={handlePromptSubmit}>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200" htmlFor="campaign-orchestrator-prompt">
-            Draft prompt
-          </label>
-          <textarea
-            id="campaign-orchestrator-prompt"
-            name="prompt"
-            rows={3}
-            className="w-full rounded-xl border border-gray-300 bg-white p-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+
+         <form action="#" className="relative" onSubmit={handlePromptSubmit}>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+            <label htmlFor="comment" className="sr-only">
+              Add your comment
+            </label>
+            <textarea
+             id="campaign-orchestrator-prompt"
+              rows={3}
             placeholder="Ask the orchestrator to generate the next campaign..."
             value={prompt}
             onChange={(event) => setPrompt(event.target.value)}
             disabled={status !== "connected"}
-          />
-          <div className="flex items-center justify-end">
-            <button
+              className="block w-full resize-none bg-transparent px-3 py-1.5 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 dark:text-white dark:placeholder:text-gray-500"
+              defaultValue={''}
+            />
+
+            {/* Spacer element to match the height of the toolbar */}
+            <div aria-hidden="true" className="py-2">
+              {/* Matches height of button in toolbar (1px border + 36px content height) */}
+              <div className="py-px">
+                <div className="h-9" />
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 flex justify-end  py-2 pr-2 pl-3">
+        
+            <div className="shrink-0">
+             <button
               type="submit"
               className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={status !== "connected" || prompt.trim().length === 0}
             >
-              Send prompt
+             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-arrow-up tabler-icon"><path d="M12 5l0 14"></path><path d="M18 11l-6 -6"></path><path d="M6 11l6 -6"></path></svg>
             </button>
+            </div>
           </div>
         </form>
+      
       </section>
     </main>
   );
